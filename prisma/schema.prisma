@@ -1,0 +1,164 @@
+// Prisma Schema for X1 Wallet Watcher Bot
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - stores Telegram user data
+model User {
+  id              Int              @id @default(autoincrement())
+  telegramId      BigInt           @unique
+  username        String?
+  firstName       String?
+  lastName        String?
+  isAdmin         Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  // Relations
+  wallets         Wallet[]
+  settings        UserSettings?
+  
+  @@index([telegramId])
+  @@map("users")
+}
+
+// User settings
+model UserSettings {
+  id                    Int       @id @default(autoincrement())
+  userId                Int       @unique
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Notification settings
+  notifyOnNewToken      Boolean   @default(true)
+  notifyOnRugger        Boolean   @default(true)
+  notifyOnLargeTransfer Boolean   @default(true)
+  largeTransferThreshold Float    @default(100)
+  
+  // Alert settings
+  enableSoundAlerts     Boolean   @default(true)
+  quietHoursStart       Int?      // Hour (0-23)
+  quietHoursEnd         Int?      // Hour (0-23)
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@map("user_settings")
+}
+
+// Watched wallet
+model Wallet {
+  id              Int              @id @default(autoincrement())
+  userId          Int
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  address         String
+  label           String?
+  addedAt         DateTime         @default(now())
+  
+  // Cached data
+  lastBalance     String?          // Stored as string to avoid precision loss
+  lastChecked     DateTime?
+  
+  // Settings
+  alertsEnabled   Boolean          @default(true)
+  
+  // Relations
+  transactions    Transaction[]
+  alerts          Alert[]
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  @@unique([userId, address])
+  @@index([userId])
+  @@index([address])
+  @@map("wallets")
+}
+
+// Transaction history (for caching and analytics)
+model Transaction {
+  id              Int              @id @default(autoincrement())
+  walletId        Int
+  wallet          Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  signature       String           @unique
+  blockTime       DateTime
+  type            String           // 'send', 'receive', 'swap', etc.
+  amount          String?          // Stored as string
+  tokenAddress    String?
+  fromAddress     String?
+  toAddress       String?
+  
+  createdAt       DateTime         @default(now())
+  
+  @@index([walletId])
+  @@index([signature])
+  @@index([blockTime])
+  @@map("transactions")
+}
+
+// Alert history
+model Alert {
+  id              Int              @id @default(autoincrement())
+  walletId        Int
+  wallet          Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  type            String           // 'new_token', 'rugger', 'large_transfer', 'security_warning'
+  severity        String           // 'info', 'warning', 'critical'
+  message         String
+  metadata        Json?            // Additional data
+  
+  read            Boolean          @default(false)
+  sentToUser      Boolean          @default(false)
+  
+  createdAt       DateTime         @default(now())
+  
+  @@index([walletId])
+  @@index([createdAt])
+  @@index([read])
+  @@map("alerts")
+}
+
+// Security scan cache
+model SecurityScan {
+  id              Int              @id @default(autoincrement())
+  walletAddress   String           @unique
+  
+  isRugger        Boolean          @default(false)
+  riskScore       Int              @default(0)
+  findings        Json?            // Array of security findings
+  
+  scannedAt       DateTime         @default(now())
+  expiresAt       DateTime         // Cache expiration (24 hours)
+  
+  @@index([walletAddress])
+  @@index([expiresAt])
+  @@map("security_scans")
+}
+
+// Token cache (for price and metadata)
+model TokenCache {
+  id              Int              @id @default(autoincrement())
+  address         String           @unique
+  
+  symbol          String?
+  name            String?
+  decimals        Int?
+  logoUrl         String?
+  
+  priceUsd        Float?
+  priceUpdatedAt  DateTime?
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  @@index([address])
+  @@map("token_cache")
+}

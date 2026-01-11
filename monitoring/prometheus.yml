@@ -1,0 +1,39 @@
+# Prometheus configuration for X1 Wallet Watcher Bot
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'x1-wallet-bot'
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Rule files for alerting
+rule_files:
+  - "alert-rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # X1 Wallet Watcher Bot health endpoint
+  - job_name: 'x1-wallet-bot'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['x1-wallet-bot:3000']
+    metrics_path: '/health'
+    
+  # If you add a /metrics endpoint to the bot in the future
+  # - job_name: 'x1-wallet-bot-metrics'
+  #   scrape_interval: 15s
+  #   static_configs:
+  #     - targets: ['x1-wallet-bot:3001']
+  #   metrics_path: '/metrics'

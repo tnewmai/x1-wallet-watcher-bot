@@ -1,0 +1,66 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build output
+dist/
+*.js.map
+
+# Environment variables (SENSITIVE - DO NOT COMMIT!)
+.env
+.env.*
+!.env.example
+!.env.example.optimized
+
+# Logs
+*.log
+logs/
+bot_*.log
+bot-output.log
+bot-error.log
+
+# Data files (Contains user data - DO NOT COMMIT!)
+data/data.json
+data/*.backup*
+data/*.corrupted*
+
+# Wrangler cache and state
+.wrangler/
+cloudflare-worker/.wrangler/
+
+# Test coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+prisma/migrations/
+.env.test
+
+# Temporary files
+tmp_*
+temp_*
+*.tmp
+
+# Scan results and progress files
+xdex*.json
+XDEX*.json
+
+# Backups (too large for Git)
+BACKUPS/
+
+# Secrets and tokens (CRITICAL - DO NOT COMMIT!)
+*secret*
+*token*
+*key.json
+!RUGGER_BLOCKLIST.json
+!ENHANCED_RUGGER_BLOCKLIST.json

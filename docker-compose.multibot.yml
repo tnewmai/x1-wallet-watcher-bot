@@ -1,0 +1,135 @@
+# Multi-Bot Docker Compose Configuration
+# Use this to run multiple Telegram bots on a single server
+# Perfect for Oracle Cloud Free Tier ARM instances
+
+version: '3.8'
+
+services:
+  # Bot 1
+  x1-watcher-bot-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: x1-bot-1
+    env_file:
+      - .env.bot1  # Create this file with bot1's BOT_TOKEN
+    volumes:
+      - ./data/bot1:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - bot-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Adjust port if you want to expose health checks
+    # ports:
+    #   - "3001:3000"
+
+  # Bot 2
+  x1-watcher-bot-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: x1-bot-2
+    env_file:
+      - .env.bot2  # Create this file with bot2's BOT_TOKEN
+    volumes:
+      - ./data/bot2:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - bot-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # ports:
+    #   - "3002:3000"
+
+  # Bot 3
+  x1-watcher-bot-3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: x1-bot-3
+    env_file:
+      - .env.bot3  # Create this file with bot3's BOT_TOKEN
+    volumes:
+      - ./data/bot3:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - bot-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # ports:
+    #   - "3003:3000"
+
+  # Add more bots as needed (bot-4, bot-5, etc.)
+  # Just copy the above block and change:
+  # - Service name: x1-watcher-bot-4
+  # - Container name: x1-bot-4
+  # - env_file: .env.bot4
+  # - volumes: ./data/bot4:/app/data
+  # - ports: 3004:3000 (if exposing)
+
+networks:
+  bot-network:
+    driver: bridge
+
+# Usage Instructions:
+# 
+# 1. Create environment files for each bot:
+#    cp .env.example .env.bot1
+#    cp .env.example .env.bot2
+#    cp .env.example .env.bot3
+#
+# 2. Edit each .env.botX file with unique BOT_TOKEN
+#
+# 3. Create data directories:
+#    mkdir -p data/bot1 data/bot2 data/bot3
+#
+# 4. Build and start all bots:
+#    docker-compose -f docker-compose.multibot.yml build
+#    docker-compose -f docker-compose.multibot.yml up -d
+#
+# 5. View logs for all bots:
+#    docker-compose -f docker-compose.multibot.yml logs -f
+#
+# 6. View logs for specific bot:
+#    docker-compose -f docker-compose.multibot.yml logs -f x1-watcher-bot-1
+#
+# 7. Stop all bots:
+#    docker-compose -f docker-compose.multibot.yml down
+#
+# 8. Restart specific bot:
+#    docker-compose -f docker-compose.multibot.yml restart x1-watcher-bot-2
+#
+# Resource Usage (per bot):
+# - RAM: 50-150 MB
+# - CPU: <5%
+# - Disk: <100 MB
+#
+# Oracle Cloud Free Tier (ARM) can easily run 5-10 bots!

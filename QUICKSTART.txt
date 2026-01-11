@@ -1,0 +1,59 @@
+=====================================
+  🚀 QUICK START - X1 WALLET WATCHER
+=====================================
+
+STEP 1: Open terminal/PowerShell
+---------------------------------
+
+STEP 2: Run this command:
+---------------------------------
+cd x1-wallet-watcher-bot
+npm run dev
+
+
+STEP 3: Wait for this message:
+---------------------------------
+✅ Bot @X1_Wallet_Watcher_Bot is running!
+
+
+STEP 4: Test it (optional):
+---------------------------------
+Send 0.001 XNT to any watched wallet.
+Wait 15 seconds.
+Check Telegram for notification! 🔔
+
+
+YOUR WATCHED WALLETS:
+---------------------------------
+1. Main Wallet
+   HhqNYhvwU9X4ne3qHJKq8PPEYUEsk2g1LttyazEhL1Ld
+
+2. FAIR DEP
+   4m5Av6WjJLC3kkCX8esdN3edLdRJfCkj5qN1F9J8qkhS
+
+3. LPEPE
+   GpefJfz34gogncUS9HXe3uyzvSNF6pF2rSsvfSkCqrnb
+
+
+WHAT'S FIXED:
+---------------------------------
+✅ Notifications ENABLED (was disabled!)
+✅ Settings optimized
+✅ 3x faster wallet checking
+✅ Ready to send alerts
+
+
+TO STOP:
+---------------------------------
+Press Ctrl+C
+
+
+MORE INFO:
+---------------------------------
+See RUN_BOT_NOW.md for detailed instructions
+See FINAL_SUMMARY.md for all changes made
+
+
+=====================================
+        EVERYTHING IS READY! 🎉
+=====================================

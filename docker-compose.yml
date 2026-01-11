@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  x1-wallet-bot:
+    build: .
+    container_name: x1-wallet-watcher-bot
+    restart: unless-stopped
+    environment:
+      # Required
+      - BOT_TOKEN=${BOT_TOKEN}
+      
+      # RPC & Explorer
+      - X1_RPC_URL=${X1_RPC_URL:-https://rpc.mainnet.x1.xyz}
+      - EXPLORER_URL=${EXPLORER_URL:-https://explorer.x1-mainnet.xen.network}
+      - POLL_INTERVAL=${POLL_INTERVAL:-15000}
+      
+      # Rate Limiting & Performance
+      - WATCHER_CONCURRENCY=${WATCHER_CONCURRENCY:-3}
+      - SECURITY_SCAN_TIMEOUT=${SECURITY_SCAN_TIMEOUT:-30000}
+      - CACHE_TTL_SHORT=${CACHE_TTL_SHORT:-300}
+      
+      # RPC Retry
+      - RPC_MAX_RETRIES=${RPC_MAX_RETRIES:-3}
+      - RPC_RETRY_DELAY=${RPC_RETRY_DELAY:-1000}
+      
+      # Health Check & Monitoring
+      - HEALTH_CHECK_PORT=${HEALTH_CHECK_PORT:-3000}
+      - HEALTH_CHECK_ENABLED=${HEALTH_CHECK_ENABLED:-true}
+      - ENABLE_PERFORMANCE_METRICS=${ENABLE_PERFORMANCE_METRICS:-true}
+      - ENABLE_RPC_METRICS=${ENABLE_RPC_METRICS:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    
+    ports:
+      # Expose health check endpoint (optional, for external monitoring)
+      - "${HEALTH_CHECK_PORT:-3000}:3000"
+    
+    volumes:
+      # Persist user data outside container
+      - ./data:/app/data
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 256M
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3

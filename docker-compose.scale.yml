@@ -1,0 +1,142 @@
+# Docker Compose for Horizontal Scaling
+version: '3.8'
+
+services:
+  # Redis for caching and queues
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: x1_wallet_bot
+      POSTGRES_USER: x1_bot
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U x1_bot"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Bot instance 1
+  bot1:
+    build: .
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      DATABASE_URL: postgresql://x1_bot:${DB_PASSWORD}@postgres:5432/x1_wallet_bot
+      REDIS_URL: redis://redis:6379
+      X1_RPC_URL: ${X1_RPC_URL}
+      INSTANCE_ID: bot1
+      NODE_ENV: production
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  # Bot instance 2
+  bot2:
+    build: .
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      DATABASE_URL: postgresql://x1_bot:${DB_PASSWORD}@postgres:5432/x1_wallet_bot
+      REDIS_URL: redis://redis:6379
+      X1_RPC_URL: ${X1_RPC_URL}
+      INSTANCE_ID: bot2
+      NODE_ENV: production
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  # Bot instance 3
+  bot3:
+    build: .
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      DATABASE_URL: postgresql://x1_bot:${DB_PASSWORD}@postgres:5432/x1_wallet_bot
+      REDIS_URL: redis://redis:6379
+      X1_RPC_URL: ${X1_RPC_URL}
+      INSTANCE_ID: bot3
+      NODE_ENV: production
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  # Worker for background jobs
+  worker:
+    build: .
+    command: node dist/worker.js
+    environment:
+      DATABASE_URL: postgresql://x1_bot:${DB_PASSWORD}@postgres:5432/x1_wallet_bot
+      REDIS_URL: redis://redis:6379
+      X1_RPC_URL: ${X1_RPC_URL}
+      INSTANCE_ID: worker1
+      NODE_ENV: production
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  # Nginx load balancer (for webhooks if needed)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - bot1
+      - bot2
+      - bot3
+    restart: unless-stopped
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

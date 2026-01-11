@@ -1,0 +1,21 @@
+# Cloudflare Workers Configuration
+name = "x1-wallet-watcher-bot"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Cron triggers for wallet watching
+[triggers]
+crons = ["* * * * *"]  # Every 1 minute (Cloudflare minimum)
+
+# Environment variables
+[env.production]
+vars = { ENVIRONMENT = "production" }
+kv_namespaces = [
+  { binding = "BOT_DATA", id = "c7da305a7a6148f882f6cae303d05a73", preview_id = "04facf0a7ee54321960da4d4e79c1508" }
+]
+
+[env.development]
+vars = { ENVIRONMENT = "development" }
+kv_namespaces = [
+  { binding = "BOT_DATA", id = "c7da305a7a6148f882f6cae303d05a73", preview_id = "04facf0a7ee54321960da4d4e79c1508" }
+]

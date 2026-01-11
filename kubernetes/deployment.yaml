@@ -1,0 +1,175 @@
+# Kubernetes deployment configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: x1-wallet-watcher-bot
+  labels:
+    app: x1-wallet-watcher-bot
+    version: v1.0.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: x1-wallet-watcher-bot
+  template:
+    metadata:
+      labels:
+        app: x1-wallet-watcher-bot
+        version: v1.0.0
+    spec:
+      containers:
+      - name: bot
+        image: x1-wallet-watcher-bot:production
+        imagePullPolicy: IfNotPresent
+        
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: x1-bot-secrets
+              key: bot-token
+        - name: X1_RPC_URL
+          valueFrom:
+            configMapKeyRef:
+              name: x1-bot-config
+              key: rpc-url
+        - name: POLL_INTERVAL
+          valueFrom:
+            configMapKeyRef:
+              name: x1-bot-config
+              key: poll-interval
+        - name: WATCHER_CONCURRENCY
+          valueFrom:
+            configMapKeyRef:
+              name: x1-bot-config
+              key: watcher-concurrency
+        - name: LOG_LEVEL
+          value: "info"
+        - name: HEALTH_CHECK_PORT
+          value: "3000"
+        - name: HEALTH_CHECK_ENABLED
+          value: "true"
+        - name: ENABLE_PERFORMANCE_METRICS
+          value: "true"
+        - name: ENABLE_RPC_METRICS
+          value: "true"
+        
+        ports:
+        - name: health
+          containerPort: 3000
+          protocol: TCP
+        
+        # Liveness probe - checks if container is alive
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: health
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # Readiness probe - checks if container is ready to serve traffic
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: health
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Startup probe - gives more time for initial startup
+        startupProbe:
+          httpGet:
+            path: /health
+            port: health
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 12
+        
+        # Resource limits and requests
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+        
+        # Volume mounts
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: logs
+          mountPath: /app/logs
+        
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      
+      # Volumes
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: x1-bot-data
+      - name: logs
+        emptyDir: {}
+      
+      # Restart policy
+      restartPolicy: Always
+      
+      # Termination grace period (for graceful shutdown)
+      terminationGracePeriodSeconds: 30
+
+---
+# Service for health checks
+apiVersion: v1
+kind: Service
+metadata:
+  name: x1-wallet-watcher-bot
+  labels:
+    app: x1-wallet-watcher-bot
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: health
+    protocol: TCP
+    name: health
+  selector:
+    app: x1-wallet-watcher-bot
+
+---
+# ConfigMap for non-sensitive configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: x1-bot-config
+data:
+  rpc-url: "https://rpc.mainnet.x1.xyz"
+  poll-interval: "15000"
+  watcher-concurrency: "3"
+
+---
+# PersistentVolumeClaim for data storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: x1-bot-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard

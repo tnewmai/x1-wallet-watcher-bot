@@ -1,0 +1,124 @@
+# Simplified deployment for IBM Cloud Free Tier
+# This version doesn't require pre-built Docker images
+# We'll build directly in the cluster
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: x1-bot
+
+---
+# ConfigMap for non-sensitive configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: x1-bot-config
+  namespace: x1-bot
+data:
+  rpc-url: "https://x1-mainnet.infrafc.org"
+  poll-interval: "15000"
+  explorer-url: "https://explorer.x1-mainnet.infrafc.org"
+  watcher-concurrency: "3"
+
+---
+# PersistentVolumeClaim for data storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: x1-bot-data
+  namespace: x1-bot
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: x1-wallet-watcher
+  namespace: x1-bot
+  labels:
+    app: x1-wallet-watcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: x1-wallet-watcher
+  template:
+    metadata:
+      labels:
+        app: x1-wallet-watcher
+    spec:
+      containers:
+      - name: bot
+        # We'll update this image later after building
+        image: x1-wallet-watcher:latest
+        imagePullPolicy: IfNotPresent
+        
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: x1-bot-secrets
+              key: BOT_TOKEN
+        - name: X1_RPC_URL
+          valueFrom:
+            configMapKeyRef:
+              name: x1-bot-config
+              key: rpc-url
+        - name: POLL_INTERVAL
+          valueFrom:
+            configMapKeyRef:
+              name: x1-bot-config
+              key: poll-interval
+        - name: EXPLORER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: x1-bot-config
+              key: explorer-url
+        - name: LOG_LEVEL
+          value: "info"
+        
+        # Resource limits (adjusted for free tier)
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+        
+        # Volume mounts
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+      
+      # Volumes
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: x1-bot-data
+      
+      restartPolicy: Always
+
+---
+# Service (optional, for future webhooks)
+apiVersion: v1
+kind: Service
+metadata:
+  name: x1-wallet-watcher
+  namespace: x1-bot
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+  selector:
+    app: x1-wallet-watcher

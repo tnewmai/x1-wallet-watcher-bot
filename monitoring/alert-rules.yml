@@ -1,0 +1,193 @@
+# Prometheus Alert Rules for X1 Wallet Watcher Bot
+# These rules trigger alerts when resource limits are approached
+
+groups:
+  - name: resource_limits
+    interval: 30s
+    rules:
+      # Memory Alerts
+      - alert: HighMemoryUsage
+        expr: memory_used_mb > 400
+        for: 2m
+        labels:
+          severity: warning
+          component: bot
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}MB (threshold: 400MB)"
+          
+      - alert: CriticalMemoryUsage
+        expr: memory_used_mb > 460
+        for: 1m
+        labels:
+          severity: critical
+          component: bot
+        annotations:
+          summary: "CRITICAL: Memory usage very high"
+          description: "Memory usage is {{ $value }}MB (critical: 460MB)"
+          
+      # CPU Alerts
+      - alert: HighCPUUsage
+        expr: cpu_percent > 70
+        for: 3m
+        labels:
+          severity: warning
+          component: bot
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% (threshold: 70%)"
+          
+      - alert: CriticalCPUUsage
+        expr: cpu_percent > 85
+        for: 1m
+        labels:
+          severity: critical
+          component: bot
+        annotations:
+          summary: "CRITICAL: CPU usage very high"
+          description: "CPU usage is {{ $value }}% (critical: 85%)"
+          
+      # RPC Rate Limit Alerts
+      - alert: HighRPCRate
+        expr: rpc_requests_per_minute > 35
+        for: 2m
+        labels:
+          severity: warning
+          component: blockchain
+        annotations:
+          summary: "RPC rate limit approaching"
+          description: "RPC requests: {{ $value }}/min (threshold: 35/min)"
+          
+      - alert: CriticalRPCRate
+        expr: rpc_requests_per_minute > 45
+        for: 1m
+        labels:
+          severity: critical
+          component: blockchain
+        annotations:
+          summary: "CRITICAL: RPC rate limit nearly exceeded"
+          description: "RPC requests: {{ $value }}/min (critical: 45/min)"
+          
+      # Telegram Rate Limit Alerts  
+      - alert: HighTelegramRate
+        expr: telegram_messages_per_second > 15
+        for: 1m
+        labels:
+          severity: warning
+          component: telegram
+        annotations:
+          summary: "Telegram rate limit approaching"
+          description: "Sending {{ $value }} messages/sec (threshold: 15/sec)"
+          
+      - alert: CriticalTelegramRate
+        expr: telegram_messages_per_second > 18
+        for: 30s
+        labels:
+          severity: critical
+          component: telegram
+        annotations:
+          summary: "CRITICAL: Telegram rate limit nearly exceeded"
+          description: "Sending {{ $value }} messages/sec (critical: 18/sec)"
+          
+      # Storage Alerts
+      - alert: HighStorageUsage
+        expr: storage_records > 8000
+        for: 5m
+        labels:
+          severity: warning
+          component: storage
+        annotations:
+          summary: "Storage approaching capacity"
+          description: "{{ $value }} records stored (threshold: 8000)"
+          
+      - alert: CriticalStorageUsage
+        expr: storage_records > 9500
+        for: 2m
+        labels:
+          severity: critical
+          component: storage
+        annotations:
+          summary: "CRITICAL: Storage nearly full"
+          description: "{{ $value }} records stored (critical: 9500)"
+
+  - name: bot_health
+    interval: 30s
+    rules:
+      # Bot Health Alerts
+      - alert: BotDown
+        expr: up{job="x1-wallet-bot"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: bot
+        annotations:
+          summary: "Bot is down"
+          description: "The bot has been down for more than 1 minute"
+          
+      - alert: HighErrorRate
+        expr: rate(errors_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          component: bot
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate: {{ $value }} errors/sec"
+          
+      - alert: SlowResponseTime
+        expr: response_time_ms > 5000
+        for: 2m
+        labels:
+          severity: warning
+          component: bot
+        annotations:
+          summary: "Slow response time"
+          description: "Average response time: {{ $value }}ms"
+          
+  - name: blockchain_health
+    interval: 30s  
+    rules:
+      # RPC Connection Alerts
+      - alert: RPCConnectionFailure
+        expr: rpc_connection_failures > 3
+        for: 2m
+        labels:
+          severity: critical
+          component: blockchain
+        annotations:
+          summary: "RPC connection failures"
+          description: "{{ $value }} RPC connection failures in 2 minutes"
+          
+      - alert: BlockchainSyncLag
+        expr: blocks_behind_head > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: blockchain
+        annotations:
+          summary: "Blockchain sync lagging"
+          description: "{{ $value }} blocks behind head"
+          
+  - name: performance
+    interval: 30s
+    rules:
+      # Performance Alerts
+      - alert: SlowWalletScanning
+        expr: wallet_scan_duration_ms > 10000
+        for: 3m
+        labels:
+          severity: warning
+          component: watcher
+        annotations:
+          summary: "Slow wallet scanning"
+          description: "Wallet scans taking {{ $value }}ms on average"
+          
+      - alert: HighNotificationBacklog
+        expr: notification_queue_size > 50
+        for: 2m
+        labels:
+          severity: warning
+          component: notifications
+        annotations:
+          summary: "Notification backlog building up"
+          description: "{{ $value }} notifications in queue"

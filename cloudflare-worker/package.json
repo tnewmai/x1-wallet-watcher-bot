@@ -1,0 +1,33 @@
+{
+  "name": "x1-wallet-watcher-cloudflare",
+  "version": "2.0.0",
+  "description": "X1 Wallet Watcher Bot - Cloudflare Workers Edition",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "test": "vitest",
+    "cf-typegen": "wrangler types"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "x1",
+    "blockchain",
+    "cloudflare-workers"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@solana/spl-token": "^0.3.11",
+    "@solana/web3.js": "^1.87.6",
+    "grammy": "^1.21.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240129.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0",
+    "wrangler": "^4.58.0"
+  }
+}

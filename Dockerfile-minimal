@@ -1,0 +1,43 @@
+# Ultra-minimal Docker image
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package-minimal.json package.json
+COPY tsconfig-minimal.json tsconfig.json
+
+# Install dependencies
+RUN npm install --production=false
+
+# Copy source
+COPY src-minimal ./src-minimal
+
+# Build
+RUN npm run build
+
+# Production image
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install wget for healthcheck
+RUN apk add --no-cache wget
+
+# Copy package files
+COPY package-minimal.json package.json
+
+# Install production dependencies only
+RUN npm install --production && npm cache clean --force
+
+# Copy built files
+COPY --from=builder /app/dist ./dist
+
+# Create data directory
+RUN mkdir -p /app/data
+
+# Run as non-root user
+USER node
+
+# Start bot
+CMD ["node", "dist/index.js"]

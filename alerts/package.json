@@ -1,0 +1,13 @@
+{
+  "name": "x1-bot-monitoring",
+  "version": "1.0.0",
+  "description": "Monitoring and alerting for X1 Wallet Watcher Bot",
+  "scripts": {
+    "monitor": "node webhook-monitor.js",
+    "monitor:slack": "WEBHOOK_TYPE=slack node webhook-monitor.js",
+    "monitor:discord": "WEBHOOK_TYPE=discord node webhook-monitor.js"
+  },
+  "keywords": ["monitoring", "alerting", "health-check"],
+  "author": "",
+  "license": "MIT"
+}

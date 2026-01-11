@@ -1,0 +1,32 @@
+{
+  "name": "x1-wallet-watcher-bot",
+  "version": "2.0.0-minimal",
+  "description": "Ultra-lightweight Telegram bot to watch X1 Blockchain wallets",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc --project tsconfig-minimal.json",
+    "start": "node dist/index.js",
+    "dev": "ts-node src-minimal/index.ts",
+    "watch": "tsc --project tsconfig-minimal.json -w"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "x1",
+    "blockchain",
+    "wallet",
+    "watcher"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@solana/web3.js": "^1.87.6",
+    "dotenv": "^16.3.1",
+    "grammy": "^1.21.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}
