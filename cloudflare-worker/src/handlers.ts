@@ -504,8 +504,9 @@ Need help? Contact @yourusername
         return;
       }
 
-      // Full blockchain security check
-      const securityInfo = await checkWalletSecurity(walletAddress);
+      // Full blockchain security check with RPC
+      const rpcUrl = this.blockchain.getRpcUrl();
+      const securityInfo = await checkWalletSecurity(walletAddress, rpcUrl);
       const enhancedCheck = performEnhancedSecurityScan(
         walletAddress, 
         securityInfo.fundingSource

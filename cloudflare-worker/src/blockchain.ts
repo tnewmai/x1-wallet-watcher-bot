@@ -13,6 +13,10 @@ export class X1Blockchain {
     this.connection = new Connection(rpcUrl, 'confirmed');
   }
 
+  getRpcUrl(): string {
+    return this.rpcUrl;
+  }
+
   async getBalance(address: string): Promise<number> {
     try {
       const pubKey = new PublicKey(address);
